@@ -1,0 +1,58 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: gitlab-secret
+type: Opaque
+stringData:
+  secretToken: "1234567"
+
+---
+apiVersion: triggers.tekton.dev/v1beta1
+kind: EventListener
+metadata:
+  name: data-product-event-listener
+spec:
+  serviceAccountName: data-product-listener-sa
+  triggers:
+    - triggerRef: data-product-listener-trigger
+---
+apiVersion: triggers.tekton.dev/v1beta1
+kind: Trigger
+metadata:
+  name: data-product-listener-trigger
+spec:
+  bindings:
+    - ref: data-product-binding
+  template:
+    ref: data-product-template
+---
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerBinding
+metadata:
+  name: data-product-binding
+spec:
+  params:
+    - name: greeting
+      value: $(body.greeting)
+---
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerTemplate
+metadata:
+  name: data-product-template
+spec:
+  params:
+    - name: greeting
+  resourcetemplates:
+    - apiVersion: tekton.dev/v1beta1
+      kind: TaskRun
+      metadata:
+        generateName: data-product-run-
+      spec:
+        taskSpec:
+          steps:
+            - image: ubuntu
+              command:
+                - echo
+              args:
+                - "Hello $(tt.params.greeting)"

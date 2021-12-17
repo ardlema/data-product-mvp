@@ -1,0 +1,20 @@
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerTemplate
+metadata:
+  name: data-product-template
+spec:
+  params:
+    - name: greeting
+  resourcetemplates:
+    - apiVersion: tekton.dev/v1beta1
+      kind: TaskRun
+      metadata:
+        generateName: data-product-run-
+      spec:
+        taskSpec:
+          steps:
+            - image: ubuntu
+              command:
+                - echo
+              args:
+                - "Hello $(params.greeting)"
