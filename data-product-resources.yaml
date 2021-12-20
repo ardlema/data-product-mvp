@@ -6,7 +6,6 @@ metadata:
 type: Opaque
 stringData:
   secretToken: "1234567"
-
 ---
 apiVersion: triggers.tekton.dev/v1beta1
 kind: EventListener
@@ -36,6 +35,24 @@ spec:
     - name: greeting
       value: $(body.greeting)
 ---
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: data-product-pipeline
+spec:
+  workspaces:
+    - name: data-product-ws
+  tasks:
+    - name: clone-template-repo
+      taskRef:
+        name: git-clone
+      params:
+        - name: url
+          value: https://github.com/ardlema/data-product-mvp.git
+      workspaces:
+        - name: output
+          workspace: data-product-ws
+---
 apiVersion: triggers.tekton.dev/v1beta1
 kind: TriggerTemplate
 metadata:
@@ -43,21 +60,18 @@ metadata:
 spec:
   resourcetemplates:
     - apiVersion: tekton.dev/v1beta1
-      kind: TaskRun
+      kind: PipelineRun
       metadata:
-        generateName: data-product-git-clone-
+        name: data-product-pipeline-run
       spec:
+        pipelineRef:
+          name: data-product-pipeline
         workspaces:
-          - name: output
+          - name: data-product-ws # this workspace name must be declared in the Pipeline
             volumeClaimTemplate:
               spec:
                 accessModes:
-                  - ReadWriteOnce
+                  - ReadWriteOnce # access mode may affect how you can use this volume in parallel tasks
                 resources:
                   requests:
-                    storage: 5Gi
-        params:
-          - name: url
-            value: https://github.com/ardlema/data-product-mvp.git
-        taskRef:
-          name: git-clone
+                    storage: 1Gi
