@@ -41,18 +41,23 @@ kind: TriggerTemplate
 metadata:
   name: data-product-template
 spec:
-  params:
-    - name: greeting
   resourcetemplates:
     - apiVersion: tekton.dev/v1beta1
       kind: TaskRun
       metadata:
-        generateName: data-product-run-
+        generateName: data-product-git-clone-
       spec:
-        taskSpec:
-          steps:
-            - image: ubuntu
-              command:
-                - echo
-              args:
-                - "Hello $(tt.params.greeting)"
+        workspaces:
+          - name: output
+            volumeClaimTemplate:
+              spec:
+                accessModes:
+                  - ReadWriteOnce
+                resources:
+                  requests:
+                    storage: 5Gi
+        params:
+          - name: url
+            value: https://github.com/ardlema/data-product-mvp.git
+        taskRef:
+          name: git-clone
