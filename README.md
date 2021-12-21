@@ -1,5 +1,3 @@
 # Tekton resources for the Data Product MVP
 
-{project.name}
-
-
+Data product 1

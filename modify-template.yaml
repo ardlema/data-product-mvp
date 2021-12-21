@@ -1,0 +1,22 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: modify-template
+spec:
+  params:
+  - name: greeting
+    type: string
+  workspaces:
+  - name: data-product-ws
+    mountPath: /workspaces/ws
+  steps:
+    - name: write-files
+      image: ubuntu
+      script: |
+        #!/usr/bin/env bash
+        set -xe
+        if [ "$(workspaces.data-product-ws.bound)" == "true" ] ; then
+          cd $(workspaces.data-product-ws.path) && sed 's/{project.name}/$(params.greeting)/g' README.md > README_tmp && mv README_tmp README.md && rm -rf .git
+        fi
+
+        
