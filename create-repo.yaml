@@ -1,0 +1,24 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: create-repo
+spec:
+  results:
+  - name: repourl
+    description: Url of the github repo created
+  params:
+  - name: data-product-name
+    type: string
+  steps:
+    - name: create-github-repo
+      image: ubuntu
+      script: |
+        #!/usr/bin/env bash
+        set -xe
+        apt-get -qq update
+        apt-get -qq -y install curl
+        apt-get -qq -y install jq
+        repository_name="$(params.data-product-name)"
+        repo_without_spaces=${repository_name// /-}
+        curl -H "Authorization: token <TOKEN>" --data '{"name":"'${repo_without_spaces}'"}' https://api.github.com/user/repos | jq . > response.json
+        cat response.json | jq -r .name | tr -d '\n' | tee $(results.repourl.path)

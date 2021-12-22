@@ -16,7 +16,8 @@ spec:
         #!/usr/bin/env bash
         set -xe
         if [ "$(workspaces.data-product-ws.bound)" == "true" ] ; then
-          cd $(workspaces.data-product-ws.path) && sed 's/{project.name}/$(params.greeting)/g' README.md > README_tmp && mv README_tmp README.md && rm -rf .git
+          cd $(workspaces.data-product-ws.path) && sed 's/{dataproduct.name}/$(params.greeting)/g' README.md > README_tmp && mv README_tmp README.md
+          cat README.md
         fi
 
         

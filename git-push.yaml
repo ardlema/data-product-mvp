@@ -1,0 +1,31 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: git-push
+spec:
+  params:
+  - name: repourl
+    type: string
+  workspaces:
+  - name: data-product-ws
+    mountPath: /workspaces/ws
+  steps:
+    - name: git-push
+      image: ubuntu
+      script: |
+        #!/usr/bin/env bash
+        set -xe
+        if [ "$(workspaces.data-product-ws.bound)" == "true" ] ; then
+          apt-get -qq update
+          apt-get -qq -y install git
+          cd $(workspaces.data-product-ws.path)
+          rm -rf .git
+          cat README.md
+          git config --global user.email "ardlema@gmail.com"
+          git config --global user.name "ardlema"
+          git init
+          git add .
+          git commit -m "First commit"
+          git branch -M main
+          git push --set-upstream https://<TOKEN>@github.com/ardlema/$(params.repourl) main
+        fi

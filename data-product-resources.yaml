@@ -1,15 +1,4 @@
 ---
-apiVersion: v1
-kind: Secret
-metadata:
-  name: basic-user-pass
-  annotations:
-    tekton.dev/git-0: https://github.com # Described below
-type: kubernetes.io/basic-auth
-stringData:
-  username: ardlema
-  password: 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
----
 apiVersion: triggers.tekton.dev/v1beta1
 kind: EventListener
 metadata:
@@ -37,6 +26,8 @@ spec:
   params:
     - name: greeting
       value: $(body.greeting)
+    - name: data-product-name
+      value: $(body.data-product-name)
 ---
 apiVersion: tekton.dev/v1beta1
 kind: Pipeline
@@ -47,7 +38,10 @@ spec:
     - name: data-product-ws
   params:
   - name: greeting
-    description: The data product
+    description: A dummy parameter
+    default: Data product X
+  - name: data-product-name
+    description: The data product name
     default: Data product X
   tasks:
     - name: clone-template-repo
@@ -55,7 +49,7 @@ spec:
         name: git-clone
       params:
         - name: url
-          value: https://github.com/ardlema/data-product-mvp.git
+          value: https://github.com/ardlema/data-product-template.git
       workspaces:
         - name: output
           workspace: data-product-ws
@@ -70,25 +64,24 @@ spec:
       workspaces:
         - name: data-product-ws
           workspace: data-product-ws
-    - name: git-push
+    - name: create-repo
       taskRef:
-        name: git-cli
+        name: create-repo
       runAfter:
         - replace-template-placeholders
       params:
-        - name: GIT_USER_NAME
-          value: ardlema
-        - name: GIT_USER_EMAIL
-          value: ardlema@gmail.com
-        - name: GIT_SCRIPT
-          value: |
-            git init
-            git add .
-            git commit -m "First commit"
-            git remote add origin https://github.com/ardlema/data-product-test.git
-            git push -u origin master
+        - name: data-product-name
+          value: "$(params.data-product-name)"
+    - name: git-push
+      taskRef:
+        name: git-push
+      runAfter:
+        - create-repo
+      params:
+        - name: repourl
+          value: "$(tasks.create-repo.results.repourl)"
       workspaces:
-        - name: source
+        - name: data-product-ws
           workspace: data-product-ws
 ---
 apiVersion: triggers.tekton.dev/v1beta1
@@ -99,6 +92,9 @@ spec:
   params:
   - name: greeting
     description: The data product
+    default: Data product X
+  - name: data-product-name
+    description: The data product name
     default: Data product X
   resourcetemplates:
     - apiVersion: tekton.dev/v1beta1
@@ -112,6 +108,8 @@ spec:
         params:
           - name: greeting
             value: $(tt.params.greeting)
+          - name: data-product-name
+            value: $(tt.params.data-product-name)
         workspaces:
           - name: data-product-ws # this workspace name must be declared in the Pipeline
             volumeClaimTemplate:
