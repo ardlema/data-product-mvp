@@ -21,4 +21,4 @@ spec:
         repository_name="$(params.data-product-name)"
         repo_without_spaces=${repository_name// /-}
         curl -H "Authorization: token <TOKEN>" --data '{"name":"'${repo_without_spaces}'"}' https://api.github.com/user/repos | jq . > response.json
-        cat response.json | jq -r .name | tr -d '\n' | tee $(results.repourl.path)
+        cat response.json | jq -r .html_url | tr -d '\n' | tee $(results.repourl.path)

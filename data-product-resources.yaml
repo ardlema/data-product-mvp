@@ -24,10 +24,18 @@ metadata:
   name: data-product-binding
 spec:
   params:
-    - name: greeting
-      value: $(body.greeting)
     - name: data-product-name
       value: $(body.data-product-name)
+    - name: data-product-domain
+      value: $(body.data-product-domain)
+    - name: data-product-description
+      value: $(body.data-product-description)
+    - name: data-product-owner
+      value: $(body.data-product-owner)
+    - name: data-product-owner-email
+      value: $(body.data-product-owner-email)
+    - name: data-product-information-sla
+      value: $(body.data-product-information-sla)
 ---
 apiVersion: tekton.dev/v1beta1
 kind: Pipeline
@@ -37,12 +45,24 @@ spec:
   workspaces:
     - name: data-product-ws
   params:
-  - name: greeting
-    description: A dummy parameter
-    default: Data product X
   - name: data-product-name
     description: The data product name
     default: Data product X
+  - name: data-product-domain
+    description: The data product domain
+    default: Domain X
+  - name: data-product-description
+    description: The data product description
+    default: This data product...
+  - name: data-product-owner
+    description: The data product owner
+    default: Owner
+  - name: data-product-owner-email
+    description: The data product owner email
+    default: owner@airbus.com
+  - name: data-product-information-sla
+    description: SLA for receiving the data product information
+    default: 24 hours
   tasks:
     - name: clone-template-repo
       taskRef:
@@ -53,30 +73,42 @@ spec:
       workspaces:
         - name: output
           workspace: data-product-ws
-    - name: replace-template-placeholders
-      taskRef:
-        name: modify-template
-      runAfter:
-        - clone-template-repo
-      params:
-        - name: greeting
-          value: "$(params.greeting)"
-      workspaces:
-        - name: data-product-ws
-          workspace: data-product-ws
     - name: create-repo
       taskRef:
         name: create-repo
       runAfter:
-        - replace-template-placeholders
+        - clone-template-repo
       params:
         - name: data-product-name
           value: "$(params.data-product-name)"
-    - name: git-push
+    - name: replace-template-placeholders
+      taskRef:
+        name: modify-template
+      runAfter:
+        - create-repo
+      params:
+        - name: data-product-name
+          value: "$(params.data-product-name)"
+        - name: data-product-domain
+          value: $(params.data-product-domain)
+        - name: data-product-description
+          value: $(params.data-product-description)
+        - name: data-product-owner
+          value: $(params.data-product-owner)
+        - name: data-product-owner-email
+          value: $(params.data-product-owner-email)
+        - name: data-product-information-sla
+          value: $(params.data-product-information-sla)
+        - name: data-product-github-url
+          value: $(tasks.create-repo.results.repourl)
+      workspaces:
+        - name: data-product-ws
+          workspace: data-product-ws
+    - name: push-repo
       taskRef:
         name: git-push
       runAfter:
-        - create-repo
+        - replace-template-placeholders
       params:
         - name: repourl
           value: "$(tasks.create-repo.results.repourl)"
@@ -90,12 +122,24 @@ metadata:
   name: data-product-template
 spec:
   params:
-  - name: greeting
-    description: The data product
-    default: Data product X
   - name: data-product-name
     description: The data product name
     default: Data product X
+  - name: data-product-domain
+    description: The data product domain
+    default: Domain X
+  - name: data-product-description
+    description: The data product description
+    default: This data product...
+  - name: data-product-owner
+    description: The data product owner
+    default: Owner
+  - name: data-product-owner-email
+    description: The data product owner email
+    default: owner@airbus.com
+  - name: data-product-information-sla
+    description: SLA for receiving the data product information
+    default: 24 hours
   resourcetemplates:
     - apiVersion: tekton.dev/v1beta1
       kind: PipelineRun
@@ -106,10 +150,18 @@ spec:
         pipelineRef:
           name: data-product-pipeline
         params:
-          - name: greeting
-            value: $(tt.params.greeting)
           - name: data-product-name
             value: $(tt.params.data-product-name)
+          - name: data-product-domain
+            value: $(tt.params.data-product-domain)
+          - name: data-product-description
+            value: $(tt.params.data-product-description)
+          - name: data-product-owner
+            value: $(tt.params.data-product-owner)
+          - name: data-product-owner-email
+            value: $(tt.params.data-product-owner-email)
+          - name: data-product-information-sla
+            value: $(tt.params.data-product-information-sla)
         workspaces:
           - name: data-product-ws # this workspace name must be declared in the Pipeline
             volumeClaimTemplate:

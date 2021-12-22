@@ -4,7 +4,19 @@ metadata:
   name: modify-template
 spec:
   params:
-  - name: greeting
+  - name: data-product-name
+    type: string
+  - name: data-product-domain
+    type: string
+  - name: data-product-description
+    type: string
+  - name: data-product-owner
+    type: string
+  - name: data-product-owner-email
+    type: string
+  - name: data-product-information-sla
+    type: string
+  - name: data-product-github-url
     type: string
   workspaces:
   - name: data-product-ws
@@ -16,8 +28,13 @@ spec:
         #!/usr/bin/env bash
         set -xe
         if [ "$(workspaces.data-product-ws.bound)" == "true" ] ; then
-          cd $(workspaces.data-product-ws.path) && sed 's/{dataproduct.name}/$(params.greeting)/g' README.md > README_tmp && mv README_tmp README.md
-          cat README.md
+          cd $(workspaces.data-product-ws.path)
+          #Replace name and description in README file
+          sed -e 's/{dataproduct.name}/$(params.data-product-name)/g' -e 's/{dataproduct.description}/$(params.data-product-description)/g' README.md > README_tmp && mv README_tmp README.md          
+          #Replace placeholders within the data product descriptor
+          sed -e 's/{dataproduct.name}/$(params.data-product-name)/g' -e 's/{dataproduct.domain}/$(params.data-product-domain)/g' -e 's/{dataproduct.description}/$(params.data-product-description)/g' -e 's/{dataproduct.owner}/$(params.data-product-owner)/g' -e 's/{dataproduct.owner_email}/$(params.data-product-owner-email)/g' -e 's/{dataproduct.information_sla}/$(params.data-product-information-sla)/g' -e 's@{dataproduct.git_repo}@$(params.data-product-github-url)@g' data-product-descriptor.yaml > data-product-descriptor_tmp && mv data-product-descriptor_tmp data-product-descriptor.yaml          
+          #Set creation date of the data product
+          sed "s/{dataproduct.creation_date}/$(date)/g" data-product-descriptor.yaml > data-product-descriptor_tmp && mv data-product-descriptor_tmp data-product-descriptor.yaml      
         fi
 
         

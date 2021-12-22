@@ -27,5 +27,6 @@ spec:
           git add .
           git commit -m "First commit"
           git branch -M main
-          git push --set-upstream https://<TOKEN>@github.com/ardlema/$(params.repourl) main
+          repo_name=$(basename $(params.repourl))
+          git push --set-upstream https://<TOKEN>@github.com/ardlema/${repo_name} main
         fi
